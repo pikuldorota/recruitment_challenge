@@ -5,7 +5,7 @@ import pycountry
 import pandas as pd
 
 
-def read_file(input_file):
+def __read_file(input_file):
     if not os.path.isfile(input_file):
         critical("Input file doesn't exist: {}".format(input_file))
     try:
@@ -15,7 +15,7 @@ def read_file(input_file):
     return file
 
 
-def add_country_code(row):
+def __add_country_code(row):
     try:
         code = pycountry.subdivisions.lookup(row['state name']).country_code
         country_code = pycountry.countries.lookup(code).alpha_3
@@ -25,7 +25,7 @@ def add_country_code(row):
     return country_code
 
 
-def process(group):
+def __process(group):
     date = group[0][0]
     country_code = group[0][1]
     impressions = group[1]['impressions'].sum()
@@ -33,7 +33,7 @@ def process(group):
     return [date, country_code, impressions, clicks]
 
 
-def save_data(output_file, input_file):
+def __save_data(output_file, input_file):
     if os.path.isfile(output_file) and os.path.getsize(output_file):
         critical("Output file exists and is not empty")
     if input_file == output_file:
@@ -43,7 +43,7 @@ def save_data(output_file, input_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process CSV file to AdTech platform format')
-    parser.add_argument('input_file', help='path to CSV file for processing', nargs='?', default='../data/utf16.csv')
+    parser.add_argument('input_file', help='path to CSV file for processing', nargs='?', default='../data/example.csv')
     parser.add_argument('output_file', help='path to place where result will be saved', nargs='?',
                         default='../data/result.csv')
     parser.add_argument('-v', '--verbose', action='store_true', help='increase output verbosity')
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     if args.verbose:
         def critical(msg):
             print('CRITICAL: {}'.format(msg))
-            print('CRITICAL: {}'.format(msg), file=sys.stderr)
+            sys.exit('CRITICAL: {}'.format(msg))
 
         def warning(msg):
             print('WARNING: {}'.format(msg))
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     else:
         def critical(msg):
-            print('CRITICAL: {}'.format(msg), file=sys.stderr)
+            sys.exit('CRITICAL: {}'.format(msg))
 
         def warning(msg):
             print('WARNING: {}'.format(msg), file=sys.stderr)
@@ -73,16 +73,16 @@ if __name__ == "__main__":
             pass
 
     info('read file')
-    data = read_file(args.input_file)
+    data = __read_file(args.input_file)
 
     info('find country codes')
-    data['country code'] = data.apply(add_country_code, axis=1)
+    data['country code'] = data.apply(__add_country_code, axis=1)
 
     info('group data')
     grouped = data.groupby(['date', 'country code'])
 
     info('process grouped data')
-    processed = map(process, grouped)
+    processed = map(__process, grouped)
     output = pd.DataFrame(processed)
     output[0] = pd.to_datetime(output[0])
 
@@ -90,4 +90,4 @@ if __name__ == "__main__":
     output.sort_values([0, 1])
 
     info('save data')
-    save_data(args.output_file, args.input_file)
+    __save_data(args.output_file, args.input_file)
