@@ -15,6 +15,18 @@ def __read_file(input_file):
     return file
 
 
+def __filter_data(data):
+    size = len(data.index)
+    data = data[data.date.str.contains(r'^\d{2}\/\d{2}\/\d{4}$')]
+    data = data[data.impressions.apply(lambda x: x.isnumeric())]
+    data = data[data.CTR.str.contains(r'^\d+\.\d+%$')]
+    if len(data) < size:
+        if size - len(data) == 1:
+            warning('1 row was removed during filtering')
+        else:
+            warning("{} rows were removed during filtering".format(size - len(data)))
+
+
 def __add_country_code(row):
     try:
         code = pycountry.subdivisions.lookup(row['state name']).country_code
@@ -29,7 +41,7 @@ def __process(group):
     date = group[0][0]
     country_code = group[0][1]
     impressions = group[1]['impressions'].sum()
-    clicks = round((group[1]['CTR'].str.rstrip('%').astype(float)/100.0*group[1]['impressions']).sum())
+    clicks = round((group[1]['CTR'].str.rstrip('%').astype(float)/100.0*float(group[1]['impressions'])).sum())
     return [date, country_code, impressions, clicks]
 
 
@@ -49,31 +61,26 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose', action='store_true', help='increase output verbosity')
     args = parser.parse_args()
 
-    if args.verbose:
-        def critical(msg):
+    def critical(msg):
+        if args.verbose:
             print('CRITICAL: {}'.format(msg))
-            sys.exit('CRITICAL: {}'.format(msg))
+        sys.exit('CRITICAL: {}'.format(msg))
 
-        def warning(msg):
+    def warning(msg):
+        if args.verbose:
             print('WARNING: {}'.format(msg))
-            print('WARNING: {}'.format(msg), file=sys.stderr)
+        print('WARNING: {}'.format(msg), file=sys.stderr)
 
-        def info(msg):
+    def info(msg):
+        if args.verbose:
             print('INFO: {}'.format(msg))
 
-    else:
-        def critical(msg):
-            sys.exit('CRITICAL: {}'.format(msg))
-
-        def warning(msg):
-            print('WARNING: {}'.format(msg), file=sys.stderr)
-
-        def info(_):
-            """With verbosity off information won't be shown anywhere"""
-            pass
 
     info('read file')
     data = __read_file(args.input_file)
+
+    info('filter data')
+    __filter_data(data)
 
     info('find country codes')
     data['country code'] = data.apply(__add_country_code, axis=1)

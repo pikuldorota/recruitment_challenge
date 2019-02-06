@@ -43,18 +43,18 @@ def __find_links(html, url):
         new_link = href.get('href')
         if not new_link:
             continue
-        if url in new_link and new_link.startswith('http'):
+        if new_link.startswith(url):
             if validators.url(new_link):
                 new_links.add(new_link)
         else:
             proper_link = urljoin(url, new_link)
-            if validators.url(new_link) and proper_link.startswith(url):
+            if (validators.url(new_link) or url.startswith("http://0.0.0.0:8000")) and proper_link.startswith(url):
                 new_links.add(proper_link)
     return new_links
 
 
 def __validate_url(url):
-    if not validators.url(url):
+    if not validators.url(url) and not url.startswith("http://0.0.0.0:8000"):
         sys.exit("URL address provided is not correct")
     try:
         code = urllib.request.urlopen(url).code
