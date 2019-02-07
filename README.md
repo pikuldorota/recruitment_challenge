@@ -8,7 +8,7 @@ This is repository with solutions to recruiting challenges. There were two tasks
 
 Solution for this problem is script CSV_report_processing.py. It runs directly from the shell. If run with -h option it shows below help output.
 
-![Alt text](./data/csv_help_output.png)
+![Alt text](./data/csv_help_output.PNG)
 
 Required options include input and output file. Input file is the one with unprocessed data and output is the place where processed data should be saved. There is additional option verbose for more informative output. With this options all warnings and errors are put on standard output and to stderr but there is also some information show. This information are for user to know where the script is with processing data.
 
