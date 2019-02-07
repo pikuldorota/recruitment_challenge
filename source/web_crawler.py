@@ -10,7 +10,7 @@ from urllib.error import URLError
 def site_map(url):
     """This function produces map of urls on given site with titles of each site which is reachable within the domain"""
     __validate_url(url)
-    parsed_url = urllib.urlparse(url)
+    parsed_url = urllib.parse.urlparse(url)
     domain = '{url.scheme}://{url.netloc}/'.format(url=parsed_url)
     dictionary = dict()
     links = {url}
@@ -31,7 +31,7 @@ def site_map(url):
             title = html.find('title').renderContents().decode()
         else:
             title: ''
-        new_links = __find_links(html, domain)
+        new_links = __find_links(html, link, domain)
         dictionary[link] = {'title': title, 'links': new_links}
 
         # define new links set as set sum of links and new_links with omitting already defined in dictionary links
@@ -41,19 +41,20 @@ def site_map(url):
     return dictionary
 
 
-def __find_links(html, domain):
+def __find_links(html, link, domain):
     """Looks for all links on given site and returns only this that are in the same domain"""
     new_links = set()
     for href in html.findAll('a'):
         new_link = href.get('href')
         if not new_link:
             continue
-        if new_link.startswith(url):
+        if new_link.startswith(domain):
             if validators.url(new_link):
                 new_links.add(new_link)
         else:
-            proper_link = urljoin(url, new_link)
-            if (validators.url(new_link) or url.startswith("http://0.0.0.0:8000")) and proper_link.startswith(url):
+            proper_link = urljoin(link, new_link)
+            if (validators.url(proper_link) or proper_link.startswith("http://0.0.0.0:8000"))\
+                    and proper_link.startswith(domain):
                 new_links.add(proper_link)
     return new_links
 
